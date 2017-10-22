@@ -15,8 +15,8 @@ public class NewMediaReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		Log.d("davsync", "received pic or video intent");
 
-		boolean isNewPic = android.hardware.Camera.ACTION_NEW_PICTURE.equals(intent.getAction());
-		boolean isNewVid = android.hardware.Camera.ACTION_NEW_VIDEO.equals(intent.getAction());
+		boolean isNewPic = intent.getAction().endsWith("NEW_PICTURE");
+		boolean isNewVid = intent.getAction().endsWith("NEW_VIDEO");
 
 		if (!isNewPic && !isNewVid) return;
 
@@ -43,15 +43,14 @@ public class NewMediaReceiver extends BroadcastReceiver {
 
 		ConnectivityManager cs = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo info = cs.getActiveNetworkInfo();
-		if (info == null) {
 			Log.d("davsync", "Queueing " + uri + "for later (no active network info)");
 			// otherwise, queue the image for later
 			helper.queueUri(uri);
-			return;
-		}
 
 		// If we have WIFI connectivity, upload immediately
-		boolean isWifi = info.isConnected() && (ConnectivityManager.TYPE_WIFI == info.getType());
+		boolean isWifi = info != null && info.isConnected()
+				&& (ConnectivityManager.TYPE_WIFI == info.getType());
+
 		if (!syncOnWifiOnly || isWifi) {
 			Log.d("davsync", "Trying to upload " + uri + " immediately (on WIFI)");
 			helper.queueUri(uri);
