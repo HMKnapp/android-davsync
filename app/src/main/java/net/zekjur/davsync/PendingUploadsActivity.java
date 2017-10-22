@@ -14,7 +14,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -108,8 +107,8 @@ public class PendingUploadsActivity extends Activity {
 				}
             }
         };
-        
-        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(LOCAL_BROADCAST_ACTION));
+
+        //LocalBroadcastManager.getInstance(this).registerReceiver(receiver, new IntentFilter(LOCAL_BROADCAST_ACTION));
 	}
 
 
@@ -119,7 +118,7 @@ public class PendingUploadsActivity extends Activity {
 	protected void onPause() {
 		super.onPause();
 		if(receiver != null) {
-			LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
+			//LocalBroadcastManager.getInstance(this).unregisterReceiver(receiver);
 			receiver = null;
 		}
 	}

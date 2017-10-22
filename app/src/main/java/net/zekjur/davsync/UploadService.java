@@ -120,6 +120,9 @@ public class UploadService extends IntentService {
 		String filename = this.filenameFromUri(uri);
 		if (filename == null) {
 			Log.d("davsyncs", "filenameFromUri returned null");
+
+			Intent ulIntent = new Intent(this, UploadService.class);
+			startService(ulIntent);
 			return;
 		}
 
@@ -164,6 +167,8 @@ public class UploadService extends IntentService {
 				fileSize = fd.getStatSize();
 			} catch (FileNotFoundException e1) {
 				Log.d("davsyncs", "File not found", e1);
+				Intent ulIntent = new Intent(this, UploadService.class);
+				startService(ulIntent);
 				return;
 			}
 
