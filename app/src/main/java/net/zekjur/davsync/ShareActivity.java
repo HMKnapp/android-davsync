@@ -48,8 +48,11 @@ public class ShareActivity extends Activity {
 	private void shareImageWithUri(Uri uri) {
 		Log.d("davsync", "Sharing " + uri.toString());
 
+		DavSyncOpenHelper helper = new DavSyncOpenHelper(this);
+		// Always queue the image
+		helper.queueUri(uri);
+		
 		Intent ulIntent = new Intent(this, UploadService.class);
-		ulIntent.putExtra(Intent.EXTRA_STREAM, uri);
 		startService(ulIntent);
 	}
 
