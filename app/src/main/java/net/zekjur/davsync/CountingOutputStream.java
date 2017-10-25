@@ -34,6 +34,6 @@ class CountingOutputStream extends OutputStream {
     }
 
 	public interface UploadListener {
-		public void onChange(int percent);
+		void onChange(int percent);
 	}
 }

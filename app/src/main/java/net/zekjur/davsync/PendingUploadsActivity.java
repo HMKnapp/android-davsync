@@ -18,10 +18,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -34,12 +32,14 @@ public class PendingUploadsActivity extends Activity {
 	private PendingUploadsAdapter adapter;
 	
 	private class Item {
-		public String uri;
+		public final String date;
+		public final String uri;
 		public boolean checked;
 		
 		public Item(String u, boolean c) {
 			uri = u;
 			checked = c;
+			date = new String("2017-09-24 00:12:34");
 		}
 	}
 	
@@ -133,24 +133,26 @@ public class PendingUploadsActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-		case R.id.action_upload:
-			DavSyncOpenHelper helper = new DavSyncOpenHelper(this);
-			for (Item i : pendingUploads) {
-				if(i.checked == true) {
-					helper.setUploading(i.uri, 1);
-				}
-			}
-			Intent ulIntent = new Intent(this, UploadService.class);
-			startService(ulIntent);
-			return true;
-		case R.id.action_settings:
-			Intent intent = new Intent(this, SettingsActivity.class);
-			startActivity(intent);
-			return true;
+			case R.id.action_clear:
+				clearPendingUpdates();
+				return true;
+			case R.id.action_settings:
+				Intent intent = new Intent(this, SettingsActivity.class);
+				startActivity(intent);
+				return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
-	
+
+	private void clearPendingUpdates() {
+		DavSyncOpenHelper itemHelper = new DavSyncOpenHelper(this);
+		for(Item item : pendingUploads) {
+			itemHelper.removeUriFromQueue(item.uri);
+		}
+		pendingUploads.clear();
+		adapter.notifyDataSetChanged();
+	}
+
 	public class PendingUploadsAdapter extends BaseAdapter {
 		
 		@Override
@@ -195,6 +197,9 @@ public class PendingUploadsActivity extends Activity {
 			TextView filename = (TextView) view.findViewById(R.id.filename);
 			filename.setText(title);
 
+			TextView statusText = (TextView) view.findViewById(R.id.status);
+			statusText.setText("Uploaded: " + pendingUploads.get(position).date);
+
 			ImageView image = (ImageView) view.findViewById(R.id.thumbnail);
 			
 			String mediaType = pendingUploads.get(position).uri.split("/")[4];
@@ -224,15 +229,6 @@ public class PendingUploadsActivity extends Activity {
 				image.setTag(Boolean.FALSE);
 			}
 
-			final CheckBox checkBox = (CheckBox) view.findViewById(R.id.checkBox);
-			checkBox.setChecked(pendingUploads.get(position).checked);
-			checkBox.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					pendingUploads.get(position).checked = checkBox.isChecked(); 
-				}
-			});
-			
 			return view;
 		}
 	}

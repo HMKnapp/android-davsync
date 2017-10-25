@@ -33,34 +33,29 @@ public class NewMediaReceiver extends BroadcastReceiver {
 			return;
 		}
 
-		boolean syncOnWifiOnly = preferences.getBoolean("auto_sync_on_wifi_only", true);
-
 		Log.d("davsync", "New picture was taken");
 		Uri uri = intent.getData();
 		Log.d("davsync", "picture uri = " + uri);
 
 		DavSyncOpenHelper helper = new DavSyncOpenHelper(context);
+		// Always queue the image
+		helper.queueUri(uri);
 
-		ConnectivityManager cs = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo info = cs.getActiveNetworkInfo();
-			Log.d("davsync", "Queueing " + uri + "for later (no active network info)");
-			// otherwise, queue the image for later
-			helper.queueUri(uri);
-
-		// If we have WIFI connectivity, upload immediately
-		boolean isWifi = info != null && info.isConnected()
-				&& (ConnectivityManager.TYPE_WIFI == info.getType());
-
-		if (!syncOnWifiOnly || isWifi) {
-			Log.d("davsync", "Trying to upload " + uri + " immediately (on WIFI)");
-			helper.queueUri(uri);
-			Intent ulIntent = new Intent(context, UploadService.class);
-			context.startService(ulIntent);
-		} else {
-			Log.d("davsync", "Queueing " + uri + "for later (not on WIFI)");
-			// otherwise, queue the image for later
-			helper.queueUri(uri);
-		}
+        checkAndCallUploadService(context, preferences);
 	}
+
+    private void checkAndCallUploadService(Context context, SharedPreferences preferences) {
+        ConnectivityManager cs = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cs.getActiveNetworkInfo();
+        // If we have WIFI connectivity, upload immediately
+        boolean isWifi = info != null && info.isConnected()
+                && (ConnectivityManager.TYPE_WIFI == info.getType());
+        boolean syncOnWifiOnly = preferences.getBoolean("auto_sync_on_wifi_only", true);
+        if (!syncOnWifiOnly || isWifi) {
+            Log.d("davsync", "Trying to upload immediately (on WIFI)");
+            Intent ulIntent = new Intent(context, UploadService.class);
+            context.startService(ulIntent);
+        }
+    }
 
 }

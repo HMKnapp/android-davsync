@@ -102,7 +102,17 @@ public class UploadService extends IntentService {
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		final Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+		DavSyncOpenHelper helper = new DavSyncOpenHelper(this);
+
+		String strUri = helper.getNextUri();
+		if(strUri == null) {
+			Log.d("davsyncs", "Upload queue is empty");
+			return;
+		}
+
+		helper.setUploading(strUri, 1);
+
+		final Uri uri = (Uri) Uri.parse(strUri);
 		Log.d("davsyncs", "Uploading " + uri.toString());
 
 		SharedPreferences preferences = getSharedPreferences("net.zekjur.davsync_preferences", Context.MODE_PRIVATE);
@@ -120,9 +130,6 @@ public class UploadService extends IntentService {
 		String filename = this.filenameFromUri(uri);
 		if (filename == null) {
 			Log.d("davsyncs", "filenameFromUri returned null");
-
-			Intent ulIntent = new Intent(this, UploadService.class);
-			startService(ulIntent);
 			return;
 		}
 
@@ -167,8 +174,6 @@ public class UploadService extends IntentService {
 				fileSize = fd.getStatSize();
 			} catch (FileNotFoundException e1) {
 				Log.d("davsyncs", "File not found", e1);
-				Intent ulIntent = new Intent(this, UploadService.class);
-				startService(ulIntent);
 				return;
 			}
 
@@ -198,9 +203,11 @@ public class UploadService extends IntentService {
 			if (responseCode == HttpURLConnection.HTTP_CREATED
 					|| responseCode == HttpURLConnection.HTTP_OK
 					|| responseCode == HttpURLConnection.HTTP_NO_CONTENT) {
+				// TODO: Move to history
+				helper.removeUriFromQueue(uri.toString());
 
 				progressNotification.cancel();
-				return;
+				return; // All OK exit here
 			}
 
 			Log.d("davsyncs", "" + httpURLConnection.getResponseMessage());
